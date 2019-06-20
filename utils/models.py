@@ -46,7 +46,8 @@ class FCDiscriminator(nn.Module):
                 nn.LeakyReLU(self.relu_slope),
                 nn.Dropout(self.drop_rate),
             ]
-        return layers
+            return layers
+
         self.fc = nn.Sequential(
             *block(latent_dim, 1024),
             *block(1024, 512),
