@@ -8,6 +8,7 @@ from utils.clf_analysis import load_data, classify_analysis, KL_Wasserstein
 from sklearn.neighbors import KNeighborsClassifier
 import time
 from utils.visualize import plot_errorband
+from utils.zutils import set_seed
 
 
 def build(model_cls, gen_cls, dis_cls, model_args={}, build_args={}):
@@ -21,13 +22,14 @@ def build(model_cls, gen_cls, dis_cls, model_args={}, build_args={}):
     model.build_model(gen_cls, dis_cls, **build_args)
     return model
 
+set_seed(0)
 
 INPUT_SHAPE = (1, 96)
 NAME = 'ECG200'
 # INPUT_SHAPE = (1, 500)
 # NAME = 'FordA'
 LATENT_DIM = 100
-LR = 1e-4
+LR = 1e-2
 BATCH_SIZE = 512
 EPOCHS = 5000
 SAMPLE_CYCLE = 100
@@ -104,12 +106,12 @@ pred_gen = clf_model.predict(x_gen)
 classify_analysis(label, pred_data, labels=LABELS)
 classify_analysis(y_test, pred_test, labels=LABELS)
 
-plot_errorband({
-    'fake_-1': x_gen[y_gen == -1],
-    'real_-1': data[label == -1],
-    'fake_+1': x_gen[y_gen == 1],
-    'real_+1': data[label == 1],
-    })
+# plot_errorband({
+#     'fake_-1': x_gen[y_gen == -1],
+#     'real_-1': data[label == -1],
+#     'fake_+1': x_gen[y_gen == 1],
+#     'real_+1': data[label == 1],
+#     })
 plot_errorband({
     'fake': x_gen,
     'real': data,

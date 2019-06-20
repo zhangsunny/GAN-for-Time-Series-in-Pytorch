@@ -57,7 +57,7 @@ class BiDCDiscriminator(nn.Module):
         self.latent_dim = latent_dim
         self.relu_slope = 0.2
         self.drop_rate = 0.25
-        self.bn_eps = 0.8
+        self.bn_eps = 1e-5
 
         def dis_block(in_channel, out_channel, bn=True):
             layers = [
@@ -154,9 +154,9 @@ class BiGAN(DCGAN):
         self.optimizer_g = self.optimizer(
             [{'params': self.encoder.parameters()},
              {'params': self.generator.parameters()}],
-            lr=self.lr*5, **self.opt_args)
-        self.optimizer_d = torch.optim.Adam(self.discriminator.parameters(),
-                                            lr=self.lr, **self.opt_args)
+            lr=self.lr, **self.opt_args)
+        self.optimizer_d = self.optimizer(
+            self.discriminator.parameters(), lr=self.lr, **self.opt_args)
         # 初始化网络权重
         self.generator.apply(self.weights_init)
         self.discriminator.apply(self.weights_init)
@@ -168,9 +168,11 @@ class BiGAN(DCGAN):
         }
 
     def train_on_epoch(self, loader):
+        EPS = 1e-12
         local_history = dict()
         tmp_history = defaultdict(list)
         for i, (x_batch, _) in enumerate(loader):
+            # x_batch = x_batch + np.random.normal(0.0, 0.1)
             x_batch = x_batch.to(self.device)
             batch_size = x_batch.size(0)
             z = self.gen_noise(0, 1, (batch_size, self.latent_dim))
@@ -183,13 +185,15 @@ class BiGAN(DCGAN):
             #     self.discriminator(x_batch, z_decoded.detach()), real)\
             #     + self.criterion(self.discriminator(x_gen.detach(), z), fake)
             d_loss = self.criterion_log(
-                self.discriminator(x_batch, z_decoded.detach()))\
-                + self.criterion_log(1-self.discriminator(x_gen.detach(), z))
+                self.discriminator(x_batch, z_decoded.detach())+EPS)\
+                + self.criterion_log(
+                    1-self.discriminator(x_gen.detach(), z)+EPS)
             d_loss.backward()
             self.optimizer_d.step()
             self.optimizer_g.zero_grad()
             # g_loss = self.criterion(self.discriminator(x_gen, z), real)
-            g_loss = self.criterion_log(self.discriminator(x_gen, z))
+            g_loss = self.criterion_log(
+                1-self.discriminator(x_gen, z)+EPS, False)
             g_loss.backward()
             self.optimizer_g.step()
             tmp_history['d_loss'].append(d_loss.item())
