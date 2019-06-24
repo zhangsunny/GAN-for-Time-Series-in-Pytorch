@@ -3,6 +3,7 @@ from DCGAN.dcgan import *
 from D2GAN.d2gan import *
 from WGAN.wgan import *
 from BiGAN.bigan import *
+from D2BiGAN.d2bigan import *
 from utils.data_process import load_npz
 from utils.clf_analysis import load_data, classify_analysis, KL_Wasserstein
 from sklearn.neighbors import KNeighborsClassifier
@@ -29,7 +30,7 @@ NAME = 'ECG200'
 # INPUT_SHAPE = (1, 500)
 # NAME = 'FordA'
 LATENT_DIM = 100
-LR = 1e-2
+LR = 1e-3
 BATCH_SIZE = 512
 EPOCHS = 5000
 SAMPLE_CYCLE = 100
@@ -37,13 +38,15 @@ LOAD = 0
 TRAIN = 1
 LABELS = [-1, 1]
 
-model_cls = BiGAN
+model_cls = D2BiGAN
 gen_cls = DCGenerator
 dis_cls = BiDCDiscriminator
 enc_cls = BiDCEncoder
 model_args = {
-    # 'clip_val': 3,
+    # 'clip_val': 0.5,
     # 'lambda_gp': 10,
+    'alpha': 1,
+    'beta': 1,
 }
 build_args = {
     'enc_cls': enc_cls,

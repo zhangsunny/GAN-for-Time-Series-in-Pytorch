@@ -65,8 +65,8 @@ class WGAN(DCGAN):
         for epoch in range(epochs):
             local_history = self.train_on_epoch(loader)
             self.update_history(local_history)
+            # self.clip_val = clip_val - 0.5 * ((epoch+1) // 2000)
             # self.clip_val = clip_val + 0.5 * ((epoch+1) // 2000)
-            self.clip_val = clip_val - 0.5 * ((epoch+1) // 2000)
             if (epoch + 1) % sample_cycle == 0 or (epoch + 1) == epochs:
                 # self.sample(epoch + 1)
                 # self.save_checkpoint(name=target)
@@ -140,7 +140,7 @@ class WGANGP(DCGAN):
             local_history = self.train_on_epoch(loader)
             self.update_history(local_history)
             # self.lambda_gp = lambda_gp + 2 * ((epoch+1) // 2000)
-            self.lambda_gp = lambda_gp - 2 * ((epoch+1) // 2000)
+            # self.lambda_gp = lambda_gp - 2 * ((epoch+1) // 2000)
             if (epoch + 1) % sample_cycle == 0 or (epoch + 1) == epochs:
                 # self.sample(epoch + 1)
                 # self.save_checkpoint(name=target)

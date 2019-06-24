@@ -168,11 +168,11 @@ class BiGAN(DCGAN):
         }
 
     def train_on_epoch(self, loader):
-        EPS = 1e-12
+        EPS = 1e-5
         local_history = dict()
         tmp_history = defaultdict(list)
         for i, (x_batch, _) in enumerate(loader):
-            # x_batch = x_batch + np.random.normal(0.0, 0.1)
+            x_batch = x_batch + np.random.normal(0.0, 0.1)
             x_batch = x_batch.to(self.device)
             batch_size = x_batch.size(0)
             z = self.gen_noise(0, 1, (batch_size, self.latent_dim))
