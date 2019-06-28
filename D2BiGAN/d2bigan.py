@@ -63,6 +63,7 @@ class D2BiGAN(DCGAN):
         self.save_checkpoint(name=target)
 
     def train_on_epoch(self, loader):
+        EPS = 1e-12
         local_history = dict()
         tmp_history = defaultdict(list)
         for x_batch, _ in loader:
@@ -75,21 +76,21 @@ class D2BiGAN(DCGAN):
             self.optimizer_d2.zero_grad()
             d1_loss = self.alpha * \
                 self.criterion_log(
-                    self.discriminator(x_batch, z_decoded.detach())) \
+                    self.discriminator(x_batch, z_decoded.detach())+EPS) \
                 + self.criterion_itself(
-                    self.discriminator(x_gen.detach(), z), False)
+                    self.discriminator(x_gen.detach(), z)+EPS, False)
             d2_loss = self.criterion_itself(
-                self.discriminator2(x_batch, z_decoded.detach()), False) \
+                self.discriminator2(x_batch, z_decoded.detach())+EPS, False) \
                 + self.beta * self.criterion_log(
-                    self.discriminator2(x_gen.detach(), z))
+                    self.discriminator2(x_gen.detach(), z)+EPS)
             d1_loss.backward()
             d2_loss.backward()
             self.optimizer_d.step()
             self.optimizer_d2.step()
             self.optimizer_g.zero_grad()
-            g_loss = self.criterion_itself(self.discriminator(x_gen, z)) \
+            g_loss = self.criterion_itself(self.discriminator(x_gen, z)+EPS) \
                 + self.beta * self.criterion_log(
-                    self.discriminator2(x_gen, z), False)
+                    self.discriminator2(x_gen, z)+EPS, False)
             g_loss.backward()
             self.optimizer_g.step()
             tmp_history['d1_loss'].append(d1_loss.item())

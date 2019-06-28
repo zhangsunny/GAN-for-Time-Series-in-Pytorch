@@ -10,6 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 import time
 from utils.visualize import plot_errorband
 from utils.zutils import set_seed
+from D2WGAN.d2wgan import *
+from utils.spectral_normalization import *
 
 
 def build(model_cls, gen_cls, dis_cls, model_args={}, build_args={}):
@@ -30,26 +32,26 @@ NAME = 'ECG200'
 # INPUT_SHAPE = (1, 500)
 # NAME = 'FordA'
 LATENT_DIM = 100
-LR = 1e-3
+LR = 1e-5
+EPOCHS = 10000
 BATCH_SIZE = 512
-EPOCHS = 5000
-SAMPLE_CYCLE = 100
+SAMPLE_CYCLE = 1000
 LOAD = 0
 TRAIN = 1
 LABELS = [-1, 1]
 
-model_cls = D2BiGAN
+model_cls = DCGAN
 gen_cls = DCGenerator
-dis_cls = BiDCDiscriminator
+dis_cls = DCDiscriminator
 enc_cls = BiDCEncoder
 model_args = {
-    # 'clip_val': 0.5,
+    # 'clip_val': 0.05,
     # 'lambda_gp': 10,
-    'alpha': 1,
-    'beta': 1,
+    # 'alpha': 0.2,
+    # 'beta': 0.1,
 }
 build_args = {
-    'enc_cls': enc_cls,
+    # 'enc_cls': enc_cls,
 }
 
 
@@ -98,8 +100,8 @@ clf_model.fit(x_train, y_train)
 pred_data = clf_model.predict(data)
 pred_test = clf_model.predict(x_test)
 pred_gen = clf_model.predict(x_gen)
-classify_analysis(label, pred_data, labels=LABELS)
-classify_analysis(y_test, pred_test, labels=LABELS)
+# classify_analysis(label, pred_data, labels=LABELS)
+# classify_analysis(y_test, pred_test, labels=LABELS)
 classify_analysis(y_gen, pred_gen, labels=LABELS)
 print('-'*20 + 'TSTR' + '-'*20)
 clf_model.fit(x_gen, y_gen)

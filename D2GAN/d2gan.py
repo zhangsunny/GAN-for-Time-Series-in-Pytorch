@@ -69,9 +69,10 @@ class D2GAN(DCGAN):
                                           lr=self.lr, **self.opt_args)
         self.optimizer_d2 = self.optimizer(self.discriminator2.parameters(),
                                            lr=self.lr, **self.opt_args)
-        # 初始化网络权重
+        # # 初始化网络权重
         # self.generator.apply(self.weights_init)
         # self.discriminator.apply(self.weights_init)
+        # self.discriminator2.apply(self.weights_init)
         self.models = {
             'generator': self.generator,
             'discriminator': self.discriminator,
