@@ -111,7 +111,7 @@ class SNDiscriminator(nn.Module):
         self.input_shape = input_shape
         self.channel = self.input_shape[0]
         self.relu_slope = 0.2
-        self.drop_rate = 0.25
+        self.drop_rate = 0.5
 
         def dis_block(in_channel, out_channel, sn=True):
             if sn:
@@ -130,7 +130,7 @@ class SNDiscriminator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *dis_block(self.channel, 16, sn=False),
+            *dis_block(self.channel, 16, sn=True),
             *dis_block(16, 32),
             *dis_block(32, 64),
             *dis_block(64, 128),
@@ -138,6 +138,7 @@ class SNDiscriminator(nn.Module):
         ds_size = int(np.ceil(self.input_shape[1] / 2 ** 4))
         self.fc = nn.Sequential(
             SpectralNorm(nn.Linear(128*ds_size, 64)),
+            # nn.Linear(128*ds_size, 64),
             nn.LeakyReLU(self.relu_slope),
             nn.Dropout(self.drop_rate),
         )
@@ -173,8 +174,9 @@ class SNGenerator(nn.Module):
         self.channel = self.input_shape[0]
         self.relu_slope = 0.2
         self.fc = nn.Sequential(
-            SpectralNorm(nn.Linear(self.latent_dim, 128*self.init_size)),
-            nn.LeakyReLU(self.relu_slope),
+            nn.Linear(self.latent_dim, 128*self.init_size),
+            # SpectralNorm(nn.Linear(self.latent_dim, 128*self.init_size)),
+            # nn.LeakyReLU(self.relu_slope),
         )
         self.conv_blocks = nn.Sequential(
             nn.Upsample(scale_factor=2),
@@ -192,3 +194,57 @@ class SNGenerator(nn.Module):
         out = out.view(out.size(0), 128, self.init_size)
         x = self.conv_blocks(out)
         return x
+
+
+class SNCritic(nn.Module):
+    def __init__(self, input_shape):
+        super(SNCritic, self).__init__()
+        self.input_shape = input_shape
+        self.channel = self.input_shape[0]
+        self.relu_slope = 0.2
+        self.drop_rate = 0.25
+
+        def dis_block(in_channel, out_channel, sn=True):
+            if sn:
+                layers = [
+                    SpectralNorm(
+                        nn.Conv1d(in_channel, out_channel, 3, 2, 1))
+                ]
+            else:
+                layers = [
+                    nn.Conv1d(in_channel, out_channel, 3, 2, 1)
+                ]
+            layers = layers + [
+                nn.LeakyReLU(self.relu_slope),
+                nn.Dropout(self.drop_rate),
+            ]
+            return layers
+
+        self.model = nn.Sequential(
+            *dis_block(self.channel, 16, sn=False),
+            *dis_block(16, 32),
+            *dis_block(32, 64),
+            *dis_block(64, 128),
+        )
+        ds_size = int(np.ceil(self.input_shape[1] / 2 ** 4))
+        self.fc = nn.Sequential(
+            # SpectralNorm(nn.Linear(128*ds_size, 64)),
+            nn.Linear(128*ds_size, 64),
+            nn.LeakyReLU(self.relu_slope),
+            nn.Dropout(self.drop_rate),
+        )
+        self.fc2 = nn.Sequential(
+            nn.Linear(64, 1),
+        )
+
+    def forward(self, x, feature_matching=False):
+        if x.dim() == 2:
+            x = x.view(x.size(0), 1, -1)
+        out = self.model(x)
+        out = out.view(out.size(0), -1)
+        feature = self.fc(out)
+        validity = self.fc2(feature)
+        if feature_matching:
+            return validity, feature
+        else:
+            return validity

@@ -32,7 +32,7 @@ NAME = 'ECG200'
 # INPUT_SHAPE = (1, 500)
 # NAME = 'FordA'
 LATENT_DIM = 100
-LR = 1e-5
+LR = 1e-4
 EPOCHS = 10000
 BATCH_SIZE = 512
 SAMPLE_CYCLE = 1000
@@ -62,6 +62,7 @@ if TRAIN:
         if LOAD:
             path =\
                 './ckpt/{:s}_{:d}.pkl'.format(model.__class__.__name__, TARGET)
+            model.load_model(path)
         print('-'*20 + 'TARGET=%s' % TARGET + '-'*20)
         model.train(
             name=NAME,
@@ -91,8 +92,8 @@ for i in LABELS:
 x_gen = np.concatenate(x_gen)
 y_gen = np.concatenate(y_gen)
 
-data, label = load_npz()
-(x_train, y_train), (x_test, y_test) = load_data()
+data, label = load_npz(NAME)
+(x_train, y_train), (x_test, y_test) = load_data(NAME)
 
 clf_model = KNeighborsClassifier(n_neighbors=1)
 

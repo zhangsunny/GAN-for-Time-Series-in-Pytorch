@@ -11,17 +11,17 @@ class DCCritic(nn.Module):
         self.channel = self.input_shape[0]
         self.relu_slope = 0.2
         self.drop_rate = 0.25
-        self.bn_eps = 0.8
 
         def dis_block(in_channel, out_channel, bn=True):
             layers = [
                 nn.Conv1d(in_channel, out_channel, 3, 2, 1),
-                nn.LeakyReLU(self.relu_slope, inplace=True),
+                # nn.BatchNorm1d(out_channel),
+                nn.InstanceNorm1d(out_channel),
+                nn.LeakyReLU(self.relu_slope),
                 nn.Dropout(self.drop_rate),
             ]
-            if bn:
-                layers.append(
-                    nn.BatchNorm1d(out_channel, self.bn_eps))
+            if not bn:
+                layers.pop(1)
             return layers
 
         self.model = nn.Sequential(
@@ -31,8 +31,14 @@ class DCCritic(nn.Module):
             *dis_block(64, 128),
         )
         ds_size = int(np.ceil(self.input_shape[1] / 2 ** 4))
-        self.fc = nn.Linear(128*ds_size, 64)
-        self.fc2 = nn.Linear(64, 1)
+        self.fc = nn.Sequential(
+            nn.Linear(128*ds_size, 64),
+            nn.LeakyReLU(self.relu_slope),
+            nn.Dropout(self.drop_rate),
+        )
+        self.fc2 = nn.Sequential(
+            nn.Linear(64, 1),
+        )
 
     def forward(self, x, feature_matching=False):
         if x.dim() == 2:

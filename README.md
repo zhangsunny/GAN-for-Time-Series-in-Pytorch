@@ -8,6 +8,6 @@
 
 至于，Transformer能否起效，尚未测试，直觉上应该是可以的
 
-GAN，RNNGAN，D2GAN文件夹下都是基于RNN的尝试，不适用；
+GAN，RNNGAN，D2GAN2文件夹下都是基于RNN的尝试，不适用；
 
-WGAN，DCGAN下是基于卷积的尝试，有点作用
+WGAN，DCGAN,D2GAN,BiGAN下是基于卷积的尝试，有点作用

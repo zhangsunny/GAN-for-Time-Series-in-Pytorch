@@ -1,5 +1,6 @@
 from utils.manage_import import *
 from utils.data_process import load_npz
+from utils.clf_analysis import load_data
 from utils.losses import LogLoss, ItselfLoss
 
 
@@ -23,11 +24,11 @@ class DCGenerator(nn.Module):
             nn.BatchNorm1d(128),
             nn.Upsample(scale_factor=2),
             nn.Conv1d(128, 128, 3, stride=1, padding=1),
-            nn.BatchNorm1d(128, 0.8),
+            nn.BatchNorm1d(128),
             nn.LeakyReLU(self.relu_slope, inplace=True),
             nn.Upsample(scale_factor=2),
             nn.Conv1d(128, 64, 3, stride=1, padding=1),
-            nn.BatchNorm1d(64, 0.8),
+            nn.BatchNorm1d(64),
             nn.LeakyReLU(self.relu_slope, inplace=True),
             nn.Conv1d(64, self.channel, 3, stride=1, padding=1),
             nn.Tanh(),
@@ -50,17 +51,16 @@ class DCGenerator2(nn.Module):
         self.relu_slope = 0.2
         self.fc = nn.Sequential(
             nn.Linear(self.latent_dim, 128*self.init_size),
-            nn.BatchNorm1d(128*self.init_size),
-            nn.LeakyReLU(self.relu_slope),
+            # nn.LeakyReLU(self.relu_slope),
         )
         self.conv_blocks = nn.Sequential(
             nn.Upsample(scale_factor=2),
             nn.Conv1d(128, 128, 3, stride=1, padding=1),
-            nn.BatchNorm1d(128, 0.8),
+            # nn.BatchNorm1d(128),
             nn.LeakyReLU(self.relu_slope, inplace=True),
             nn.Upsample(scale_factor=2),
             nn.Conv1d(128, 64, 3, stride=1, padding=1),
-            nn.BatchNorm1d(64, 0.8),
+            # nn.BatchNorm1d(64),
             nn.LeakyReLU(self.relu_slope, inplace=True),
             nn.Conv1d(64, self.channel, 3, stride=1, padding=1),
             nn.Tanh(),
@@ -73,64 +73,18 @@ class DCGenerator2(nn.Module):
         return x
 
 
-# class DCDiscriminator(nn.Module):
-#     def __init__(self, input_shape):
-#         super(DCDiscriminator, self).__init__()
-#         self.input_shape = input_shape
-#         self.channel = self.input_shape[0]
-#         self.relu_slope = 0.2
-#         self.drop_rate = 0.25
-#         self.bn_eps = 0.8
-
-#         def dis_block(in_channel, out_channel, bn=True):
-#             layers = [
-#                 nn.Conv1d(in_channel, out_channel, 3, 2, 1),
-#                 nn.LeakyReLU(self.relu_slope, inplace=True),
-#                 # nn.Dropout(self.drop_rate),
-#             ]
-#             if bn:
-#                 layers.append(
-#                     nn.BatchNorm1d(out_channel, self.bn_eps))
-#             return layers
-
-#         self.model = nn.Sequential(
-#             *dis_block(self.channel, 16, bn=False),
-#             *dis_block(16, 32),
-#             *dis_block(32, 64),
-#             *dis_block(64, 128),
-#         )
-#         ds_size = int(np.ceil(self.input_shape[1] / 2 ** 4))
-#         self.fc = nn.Linear(128*ds_size, 64)
-#         self.fc2 = nn.Sequential(
-#             nn.Linear(64, 1),
-#             nn.Sigmoid(),
-#         )
-
-#     def forward(self, x, feature_matching=False):
-#         if x.dim() == 2:
-#             x = x.view(x.size(0), 1, -1)
-#         out = self.model(x)
-#         out = out.view(out.size(0), -1)
-#         feature = self.fc(out)
-#         validity = self.fc2(feature)
-#         if feature_matching:
-#             return validity, feature
-#         else:
-#             return validity
-
-
 class DCDiscriminator(nn.Module):
     def __init__(self, input_shape):
         super(DCDiscriminator, self).__init__()
         self.input_shape = input_shape
         self.channel = self.input_shape[0]
         self.relu_slope = 0.2
-        self.drop_rate = 0
+        self.drop_rate = 0.5
 
         def dis_block(in_channel, out_channel, bn=True):
             layers = [
                 nn.Conv1d(in_channel, out_channel, 3, 2, 1),
-                # nn.BatchNorm1d(out_channel),
+                nn.BatchNorm1d(out_channel),
                 # nn.InstanceNorm1d(out_channel),
                 nn.LeakyReLU(self.relu_slope),
                 nn.Dropout(self.drop_rate),
@@ -148,7 +102,6 @@ class DCDiscriminator(nn.Module):
         ds_size = int(np.ceil(self.input_shape[1] / 2 ** 4))
         self.fc = nn.Sequential(
             nn.Linear(128*ds_size, 64),
-            # nn.BatchNorm1d(64),
             nn.LeakyReLU(self.relu_slope),
             nn.Dropout(self.drop_rate),
         )
@@ -245,7 +198,7 @@ class DCGAN(object):
     def train_on_epoch(self, loader):
         local_history = dict()
         tmp_history = defaultdict(list)
-        EPS = 1e-12
+        EPS = 0
         for x_batch, _ in loader:
             # 添加高斯噪声以防止过拟合
             # x_batch = x_batch + np.random.normal(0.0, 0.1)
@@ -378,7 +331,8 @@ class DCGAN(object):
         return loader
 
     def load_npz(self, name='ECG200', target=None):
-        data, label = load_npz(name)
+        # data, label = load_npz(name)
+        (data, label), (_, _) = load_data(name)
         if not target:
             inx = range(len(data))
         else:
