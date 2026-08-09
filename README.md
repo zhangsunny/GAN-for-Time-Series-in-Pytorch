@@ -1,3 +1,5 @@
+
+
 # GAN For Time Series In Pytorch
 
 尝试使用GAN实现生成时间序列，经过测试发现，基于RNN的GAN很容易过拟合，难以训练
@@ -10,4 +12,4 @@
 
 GAN，RNNGAN，D2GAN2文件夹下都是基于RNN的尝试，不适用；
 
-WGAN，DCGAN,D2GAN,BiGAN下是基于卷积的尝试，有点作用
+D2WGAN，DCGAN,D2GAN,BiGAN下是基于卷积的尝试，有点作用
